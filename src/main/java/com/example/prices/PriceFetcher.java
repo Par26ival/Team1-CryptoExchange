@@ -45,7 +45,7 @@ public class PriceFetcher {
 
             String urlString = String.format("%s?ids=%s&vs_currencies=%s", API_URL, ids, vsCurrencies);
 
-            URL url = new URL(urlString);
+            URL url = java.net.URI.create(urlString).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.connect();
