@@ -1,4 +1,4 @@
-package com.example.prices;
+package com.prices;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
