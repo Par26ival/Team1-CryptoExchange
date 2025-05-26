@@ -66,7 +66,7 @@ public class CurrencyConverter {
         }
     }
 
-    private static String getCoinGeckoId(String symbol) {
+    public static String getCoinGeckoId(String symbol) {
         return switch (symbol.toUpperCase()) {
             case "BTC" -> "bitcoin";
             case "ETH" -> "ethereum";
