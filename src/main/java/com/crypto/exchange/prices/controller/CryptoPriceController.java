@@ -1,6 +1,5 @@
 package com.crypto.exchange.prices.controller;
 
-import com.crypto.exchange.prices.db.model.CryptoPriceRecord;
 import com.crypto.exchange.prices.service.CryptoPriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +23,7 @@ public class CryptoPriceController {
     @GetMapping("/{crypto}/{fiat}")
     public ResponseEntity<Double> getCryptoPriceInFiat(@PathVariable String crypto, @PathVariable String fiat) {
         Double price = cryptoPriceService.getCryptoPriceInFiat(crypto, fiat);
-        if (price != null) {
-            return ResponseEntity.ok(price);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return price != null ? ResponseEntity.ok(price) : ResponseEntity.notFound().build();
     }
 }
 

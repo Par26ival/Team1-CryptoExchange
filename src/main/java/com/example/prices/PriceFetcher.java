@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.*;
@@ -52,7 +51,7 @@ public class PriceFetcher {
             String vsCurrencies = "usd,eur,bgn";
             String urlString = String.format("%s?ids=%s&vs_currencies=%s", COINGECKO_API, ids, vsCurrencies);
 
-            HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+            HttpURLConnection conn = (HttpURLConnection) java.net.URI.create(urlString).toURL().openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
@@ -91,7 +90,7 @@ public class PriceFetcher {
             String[] symbols = {"BTCUSDT", "ETHUSDT", "BNBUSDT"};
             for (String symbol : symbols) {
                 String urlString = BINANCE_API + "?symbol=" + symbol;
-                HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+                HttpURLConnection conn = (HttpURLConnection) java.net.URI.create(urlString).toURL().openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);

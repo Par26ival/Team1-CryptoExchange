@@ -1,6 +1,5 @@
 package com.crypto.exchange.prices.service;
 
-import com.crypto.exchange.prices.db.CryptoPriceRepository;
 import com.crypto.exchange.prices.db.model.CryptoPriceRecord;
 import com.example.prices.PriceFetcher;
 import com.prices.CurrencyConverter;
