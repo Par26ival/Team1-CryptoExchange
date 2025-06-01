@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PriceRepository extends JpaRepository<PriceEntity, Long> {
+public interface PriceHistoryRepository extends JpaRepository<PriceEntity, Long> {
 
     @Query(value = """
         SELECT 
