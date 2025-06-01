@@ -29,6 +29,13 @@ public class CryptoPriceService {
         return price != null ? price : -1.0;
     }
 
+
+
+
+
+
+
+
     public CryptoPriceRecord getExampleLatestPrices() {
         Map<String, Double> btcPrices = new HashMap<>();
         btcPrices.put("USD", 70000.99);

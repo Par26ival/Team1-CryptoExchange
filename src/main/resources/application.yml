@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/crypto_exchange
+    username: crypto_user
+    password: crypto_pass
+
+  jpa:
+    hibernate:
+      ddl-auto: update         # Creates or updates tables based on @Entity classes
+    show-sql: true             # Prints SQL statements in the console
+    properties:
+      hibernate:
+        format_sql: true       # Formats printed SQL for easier reading
+
+  application:
+    name: prices-module
+
