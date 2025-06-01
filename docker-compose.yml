@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:16
+    container_name: crypto_postgres
+    restart: always
+
+    # WARNING: These credentials are for development only.
+    environment:
+      POSTGRES_DB: crypto_exchange
+      POSTGRES_USER: crypto_user
+      POSTGRES_PASSWORD: crypto_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
