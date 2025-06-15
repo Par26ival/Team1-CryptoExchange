@@ -14,7 +14,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -31,3 +31,19 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# macOS system files
+.DS_Store
+
+# Java class files
+*.class
+
+# Log files
+*.log
+
+# Maven files
+dependency-reduced-pom.xml
+.mvn/timing.properties
+
+# IntelliJ IDEA
+out/

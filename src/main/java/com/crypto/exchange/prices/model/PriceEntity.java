@@ -1,4 +1,4 @@
-package com.crypto.exchange.prices.db.model;
+package com.crypto.exchange.prices.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
