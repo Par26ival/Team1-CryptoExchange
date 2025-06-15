@@ -1,11 +1,10 @@
 package com.crypto.exchange.prices.service;
 
 import com.crypto.exchange.prices.db.model.CryptoPriceRecord;
-import com.example.prices.PriceFetcher;
+import com.crypto.exchange.prices.scheduler.PriceFetcher;
 import com.prices.CurrencyConverter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,28 +12,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class CryptoPriceService {
 
-    //CryptoPriceRepository cryptoPriceRepository;
-    @Autowired
-    PriceFetcher priceFetcher;
+    private static final Logger log = LoggerFactory.getLogger(CryptoPriceService.class);
+    private final PriceFetcher priceFetcher;
+
+    public CryptoPriceService(PriceFetcher priceFetcher) {
+        this.priceFetcher = priceFetcher;
+    }
 
     public double getCryptoPriceInFiat(String crypto, String fiat) {
         crypto = CurrencyConverter.getCoinGeckoId(crypto);
         fiat = CurrencyConverter.getCoinGeckoId(fiat);
         log.info("Fetching price for {} in {}", crypto, fiat);
-        Double price = priceFetcher.getPrice(crypto, fiat);
-        return price != null ? price : -1.0;
+        return priceFetcher.getPrice(crypto, fiat);
     }
-
-
-
-
-
-
-
 
     public CryptoPriceRecord getExampleLatestPrices() {
         Map<String, Double> btcPrices = new HashMap<>();
@@ -55,4 +47,3 @@ public class CryptoPriceService {
     }
 
 }
-

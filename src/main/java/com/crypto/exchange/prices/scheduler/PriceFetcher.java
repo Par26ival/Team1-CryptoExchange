@@ -1,32 +1,41 @@
-package com.example.prices;
+package com.crypto.exchange.prices.scheduler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+@Component
 public class PriceFetcher {
 
-    private static final Logger logger = Logger.getLogger(PriceFetcher.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PriceFetcher.class);
 
     private static final String COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
     private static final String BINANCE_API = "https://api.binance.com/api/v3/ticker/price";
-    private static final int CACHE_EXPIRY_SECONDS = 60;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final ObjectMapper mapper = new ObjectMapper();
-
     private final ConcurrentMap<String, Map<String, Double>> priceCache = new ConcurrentHashMap<>();
     private volatile long lastUpdateTimestamp = 0;
 
-    public PriceFetcher() {
-        scheduler.scheduleAtFixedRate(this::updatePrices, 0, CACHE_EXPIRY_SECONDS, TimeUnit.SECONDS);
+    @PostConstruct
+    public void init() {
+        logger.info("PriceFetcher initialized and first fetch will happen shortly.");
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        logger.info("PriceFetcher shutting down.");
     }
 
     public Double getPrice(String tokenId, String fiatCurrency) {
@@ -37,11 +46,12 @@ public class PriceFetcher {
         return null;
     }
 
-    private void updatePrices() {
+    @Scheduled(fixedRate = 60000)
+    public void updatePrices() {
         boolean success = fetchFromCoinGecko();
         if (!success) {
-            logger.warning("Falling back to Binance (partial support)");
-            fetchFromBinance(); // Optional fallback
+            logger.warn("Falling back to Binance (partial support)");
+            fetchFromBinance();
         }
     }
 
@@ -58,7 +68,7 @@ public class PriceFetcher {
             conn.connect();
 
             if (conn.getResponseCode() != 200) {
-                logger.severe("CoinGecko API failed with HTTP code: " + conn.getResponseCode());
+                logger.error("CoinGecko API failed with HTTP code: {}", conn.getResponseCode());
                 return false;
             }
 
@@ -69,18 +79,15 @@ public class PriceFetcher {
                 }
             }
 
-            Map<String, Map<String, Double>> prices = mapper.readValue(inline.toString(),
-                    new TypeReference<>() {
-                    });
-
+            Map<String, Map<String, Double>> prices = mapper.readValue(inline.toString(), new TypeReference<>() {});
             priceCache.clear();
             priceCache.putAll(prices);
             lastUpdateTimestamp = System.currentTimeMillis();
-            logger.info("Prices updated from CoinGecko at " + lastUpdateTimestamp);
+            logger.info("Prices updated from CoinGecko at {}", lastUpdateTimestamp);
             return true;
 
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error fetching prices from CoinGecko", e);
+            logger.error("Error fetching prices from CoinGecko", e);
             return false;
         }
     }
@@ -97,7 +104,7 @@ public class PriceFetcher {
                 conn.connect();
 
                 if (conn.getResponseCode() != 200) {
-                    logger.warning("Binance API failed for symbol " + symbol);
+                    logger.warn("Binance API failed for symbol {}", symbol);
                     continue;
                 }
 
@@ -108,34 +115,16 @@ public class PriceFetcher {
                     }
                 }
 
-                Map<String, Object> response = mapper.readValue(inline.toString(),
-                        new TypeReference<>() {
-                        });
-
+                Map<String, Object> response = mapper.readValue(inline.toString(), new TypeReference<>() {});
                 String tokenId = symbol.substring(0, symbol.length() - 4).toLowerCase(); // e.g., btc
                 Double price = Double.parseDouble((String) response.get("price"));
                 priceCache.put(tokenId, Map.of("usd", price));
             }
 
-            logger.info("Prices updated from Binance as fallback");
+            logger.info("Prices updated from Binance fallback");
 
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error fetching prices from Binance fallback", e);
+            logger.error("Error fetching prices from Binance fallback", e);
         }
-    }
-
-    public void shutdown() {
-        scheduler.shutdown();
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        PriceFetcher fetcher = new PriceFetcher();
-
-        Thread.sleep(5000);
-
-        System.out.println("ETH price in USD: " + fetcher.getPrice("ethereum", "usd"));
-        System.out.println("BTC price in EUR: " + fetcher.getPrice("bitcoin", "eur"));
-
-        fetcher.shutdown();
     }
 }

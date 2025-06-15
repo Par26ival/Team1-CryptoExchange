@@ -1,6 +1,6 @@
 package com.crypto.exchange.prices.controller.config;
 
-import com.example.prices.PriceFetcher;
+import com.crypto.exchange.prices.scheduler.PriceFetcher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
