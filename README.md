@@ -23,8 +23,6 @@ With the database running, start the app using:
 ```
 Or use your IDE’s Run button:
 
-![img_1.png](img_1.png)
-(IntelliJ IDEA example)
 ## 3. Stop and Remove the Database Container
 
 When finished, stop and remove the database container:
