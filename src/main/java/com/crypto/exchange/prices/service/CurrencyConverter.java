@@ -1,4 +1,4 @@
-package com.prices;
+package com.crypto.exchange.prices.service;
 
 import com.google.gson.*;
 import okhttp3.*;

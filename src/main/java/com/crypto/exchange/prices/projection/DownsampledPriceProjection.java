@@ -1,4 +1,4 @@
-package com.crypto.exchange.prices.db.projection;
+package com.crypto.exchange.prices.projection;
 
 import java.time.Instant;
 

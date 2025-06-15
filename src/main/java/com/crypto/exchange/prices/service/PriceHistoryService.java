@@ -1,6 +1,6 @@
 package com.crypto.exchange.prices.service;
 
-import com.crypto.exchange.prices.db.repository.PriceHistoryRepository;
+import com.crypto.exchange.prices.repository.PriceHistoryRepository;
 import com.crypto.exchange.prices.dto.PricePointDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

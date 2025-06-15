@@ -1,7 +1,7 @@
-package com.crypto.exchange.prices.db.repository;
+package com.crypto.exchange.prices.repository;
 
-import com.crypto.exchange.prices.db.model.PriceEntity;
-import com.crypto.exchange.prices.db.projection.DownsampledPriceProjection;
+import com.crypto.exchange.prices.model.PriceEntity;
+import com.crypto.exchange.prices.projection.DownsampledPriceProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
