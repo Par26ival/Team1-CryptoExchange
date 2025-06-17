@@ -6,11 +6,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update         # Creates or updates tables based on @Entity classes
-    show-sql: true             # Prints SQL statements in the console
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true       # Formats printed SQL for easier reading
+        format_sql: true
+
+  cache:
+    type: caffeine
+    cache-names: latest-prices
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=300s
 
   application:
     name: prices-module
