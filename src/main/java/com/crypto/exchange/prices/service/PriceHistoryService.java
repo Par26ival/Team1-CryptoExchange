@@ -1,10 +1,8 @@
 package com.crypto.exchange.prices.service;
 
-import com.crypto.exchange.prices.model.PriceEntity;
 import com.crypto.exchange.prices.repository.PriceHistoryRepository;
 import com.crypto.exchange.prices.dto.PricePointDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -29,15 +27,16 @@ public class PriceHistoryService {
     public final PriceHistoryRepository priceHistoryRepository;
 
     public List<PricePointDTO> getDownsampledHistory(String cryptoCode, String fiatCode, String range) {
-        record Pair(String bucketSize, String rangeInterval) {}
+        record Pair(String bucketSize, String rangeInterval) {
+        }
         Pair p = switch (range) {
-            case "1h"  -> new Pair("1 minute",    "1 hour");
-            case "6h"  -> new Pair("10 minutes","6 hours");
-            case "24h" -> new Pair("10 minutes","24 hours");
-            case "7d"  -> new Pair("1 hour",      "7 days");
-            case "30d" -> new Pair("4 hours",   "30 days");
-            case "1y"  -> new Pair("1 day",       "1 year");
-            default    -> throw new IllegalArgumentException("Unsupported range: " + range);
+            case "1h" -> new Pair("1 minute", "1 hour");
+            case "6h" -> new Pair("10 minutes", "6 hours");
+            case "24h" -> new Pair("10 minutes", "24 hours");
+            case "7d" -> new Pair("1 hour", "7 days");
+            case "30d" -> new Pair("4 hours", "30 days");
+            case "1y" -> new Pair("1 day", "1 year");
+            default -> throw new IllegalArgumentException("Unsupported range: " + range);
         };
 
         log.info("range={}, bucket={}, span={}", range, p.bucketSize(), p.rangeInterval());
@@ -54,23 +53,23 @@ public class PriceHistoryService {
     @EventListener(ApplicationReadyEvent.class)
     void seedDatabase() {
 
-        record Coin(String id, String symbol) {}
+        record Coin(String id, String symbol) {
+        }
         List<Coin> coins = List.of(
-                new Coin("bitcoin",      "BTC"),
-                new Coin("ethereum",     "ETH"),
-                new Coin("binancecoin",  "BNB"),
-                new Coin("solana",       "SOL"),
-                new Coin("polygon",      "MATIC"),
-                new Coin("avalanche-2",  "AVAX"),
-                new Coin("tether",       "USDT"),
-                new Coin("usd-coin",     "USDC"),
-                new Coin("dai",          "DAI"),
-                new Coin("chainlink",    "LINK"),
-                new Coin("uniswap",      "UNI"),
-                new Coin("aave",         "AAVE")
-        );
+                new Coin("bitcoin", "BTC"),
+                new Coin("ethereum", "ETH"),
+                new Coin("binancecoin", "BNB"),
+                new Coin("solana", "SOL"),
+                new Coin("polygon", "MATIC"),
+                new Coin("avalanche-2", "AVAX"),
+                new Coin("tether", "USDT"),
+                new Coin("usd-coin", "USDC"),
+                new Coin("dai", "DAI"),
+                new Coin("chainlink", "LINK"),
+                new Coin("uniswap", "UNI"),
+                new Coin("aave", "AAVE"));
 
-        int[] spans = {365, 30, 1};
+        int[] spans = { 365, 30, 1 };
 
         for (Coin c : coins) {
             for (int days : spans) {
@@ -102,6 +101,7 @@ public class PriceHistoryService {
         String body = client.send(req, HttpResponse.BodyHandlers.ofString()).body();
 
         Map<?, ?> json = new ObjectMapper().readValue(body, Map.class);
+        @SuppressWarnings("unchecked")
         List<List<Object>> prices = (List<List<Object>>) json.get("prices");
 
         for (List<Object> p : prices) {

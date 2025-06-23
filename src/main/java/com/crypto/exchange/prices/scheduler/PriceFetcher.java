@@ -2,6 +2,7 @@ package com.crypto.exchange.prices.scheduler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.crypto.exchange.prices.dto.PricePointDTO;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Map;
+import java.util.*;
 import java.util.Scanner;
 
 @Component
@@ -23,7 +24,7 @@ public class PriceFetcher {
 
     private static final String COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
     private static final String BINANCE_API = "https://api.binance.com/api/v3/ticker/price";
-    private static final String CACHE_NAME   = "latest-prices";
+    private static final String CACHE_NAME = "latest-prices";
 
     private final ObjectMapper mapper;
     private final Cache priceCache;
@@ -47,6 +48,7 @@ public class PriceFetcher {
         logger.info("PriceFetcher shutting down.");
     }
 
+    @SuppressWarnings("unchecked")
     public Double getPrice(String tokenId, String fiatCurrency) {
         Map<String, Double> tokenPrices = priceCache.get(tokenId.toLowerCase(), Map.class);
         if (tokenPrices != null) {
@@ -81,12 +83,19 @@ public class PriceFetcher {
                 return false;
             }
 
-            Map<String, Map<String, Double>> prices;
-            try (var in = conn.getInputStream()) {
-                prices = mapper.readValue(in, new TypeReference<>() {});
+            StringBuilder inline = new StringBuilder();
+            try (Scanner scanner = new Scanner(conn.getInputStream())) {
+                while (scanner.hasNext()) {
+                    inline.append(scanner.nextLine());
+                }
             }
-            prices.forEach(priceCache::put);
 
+            Map<String, Map<String, Double>> prices = mapper.readValue(inline.toString(), new TypeReference<>() {
+            });
+            // Put each entry individually into the cache
+            for (Map.Entry<String, Map<String, Double>> entry : prices.entrySet()) {
+                priceCache.put(entry.getKey(), entry.getValue());
+            }
             lastUpdateTimestamp = System.currentTimeMillis();
             logger.info("Prices refreshed from CoinGecko: {} symbols (at {})", prices.size(), lastUpdateTimestamp);
             return true;
@@ -99,7 +108,7 @@ public class PriceFetcher {
 
     private void fetchFromBinance() {
         try {
-            String[] symbols = {"BTCUSDT", "ETHUSDT", "BNBUSDT"};
+            String[] symbols = { "BTCUSDT", "ETHUSDT", "BNBUSDT" };
             for (String symbol : symbols) {
                 String urlString = BINANCE_API + "?symbol=" + symbol;
                 HttpURLConnection conn = (HttpURLConnection) java.net.URI.create(urlString).toURL().openConnection();
@@ -120,7 +129,8 @@ public class PriceFetcher {
                     }
                 }
 
-                Map<String, Object> response = mapper.readValue(inline.toString(), new TypeReference<>() {});
+                Map<String, Object> response = mapper.readValue(inline.toString(), new TypeReference<>() {
+                });
                 String tokenId = symbol.substring(0, symbol.length() - 4).toLowerCase(); // e.g., btc
                 Double price = Double.parseDouble((String) response.get("price"));
                 priceCache.put(tokenId, Map.of("usd", price));
@@ -131,5 +141,28 @@ public class PriceFetcher {
         } catch (IOException e) {
             logger.error("Error fetching prices from Binance fallback", e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Map<String, Double>> getAllLatestPrices() {
+        Map<String, Map<String, Double>> allPrices = new HashMap<>();
+        Object nativeCache = priceCache.getNativeCache();
+        if (nativeCache instanceof Map<?, ?> map) {
+            for (Object key : map.keySet()) {
+                Map<String, Double> prices = priceCache.get((String) key, Map.class);
+                if (prices != null) {
+                    allPrices.put((String) key, prices);
+                }
+            }
+        }
+        return allPrices;
+    }
+
+    public List<PricePointDTO> getPriceHistory(String crypto, String fiat, String from, String to) {
+        return new ArrayList<>();
+    }
+
+    public Double convert(String from, String to, double amount) {
+        return null;
     }
 }
