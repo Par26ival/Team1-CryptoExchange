@@ -7,10 +7,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:/db/ux_price_constraint.sql
 
   cache:
     type: caffeine

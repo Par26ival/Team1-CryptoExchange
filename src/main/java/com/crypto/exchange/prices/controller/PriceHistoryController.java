@@ -12,7 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/prices/history")
 @RequiredArgsConstructor
-@Slf4j
 public class PriceHistoryController {
     private final PriceHistoryService priceHistoryService;
 
@@ -22,7 +21,6 @@ public class PriceHistoryController {
             @RequestParam(defaultValue = "USD") String fiatCode,
             @RequestParam(defaultValue = "24h") String range
     ) {
-        log.info("In price history controller");
         return priceHistoryService.getDownsampledHistory(cryptoCode, fiatCode, range);
     }
 }
