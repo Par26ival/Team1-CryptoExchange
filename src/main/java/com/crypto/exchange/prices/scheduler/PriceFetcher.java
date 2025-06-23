@@ -6,6 +6,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +15,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Component
 public class PriceFetcher {
@@ -23,10 +23,19 @@ public class PriceFetcher {
 
     private static final String COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
     private static final String BINANCE_API = "https://api.binance.com/api/v3/ticker/price";
+    private static final String CACHE_NAME   = "latest-prices";
 
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final ConcurrentMap<String, Map<String, Double>> priceCache = new ConcurrentHashMap<>();
+    private final ObjectMapper mapper;
+    private final Cache priceCache;
     private volatile long lastUpdateTimestamp = 0;
+
+    public PriceFetcher(ObjectMapper mapper, CacheManager cacheManager) {
+        this.mapper = mapper;
+        this.priceCache = cacheManager.getCache(CACHE_NAME);
+        if (priceCache == null) {
+            throw new IllegalStateException("Cache '" + CACHE_NAME + "' not configured");
+        }
+    }
 
     @PostConstruct
     public void init() {
@@ -39,7 +48,7 @@ public class PriceFetcher {
     }
 
     public Double getPrice(String tokenId, String fiatCurrency) {
-        Map<String, Double> tokenPrices = priceCache.get(tokenId.toLowerCase());
+        Map<String, Double> tokenPrices = priceCache.get(tokenId.toLowerCase(), Map.class);
         if (tokenPrices != null) {
             return tokenPrices.get(fiatCurrency.toLowerCase());
         }
@@ -72,18 +81,14 @@ public class PriceFetcher {
                 return false;
             }
 
-            StringBuilder inline = new StringBuilder();
-            try (Scanner scanner = new Scanner(conn.getInputStream())) {
-                while (scanner.hasNext()) {
-                    inline.append(scanner.nextLine());
-                }
+            Map<String, Map<String, Double>> prices;
+            try (var in = conn.getInputStream()) {
+                prices = mapper.readValue(in, new TypeReference<>() {});
             }
+            prices.forEach(priceCache::put);
 
-            Map<String, Map<String, Double>> prices = mapper.readValue(inline.toString(), new TypeReference<>() {});
-            priceCache.clear();
-            priceCache.putAll(prices);
             lastUpdateTimestamp = System.currentTimeMillis();
-            logger.info("Prices updated from CoinGecko at {}", lastUpdateTimestamp);
+            logger.info("Prices refreshed from CoinGecko: {} symbols (at {})", prices.size(), lastUpdateTimestamp);
             return true;
 
         } catch (IOException e) {
